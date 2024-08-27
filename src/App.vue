@@ -1,7 +1,7 @@
 <template>
   <div
   class="bg-bg_header
-  flex flex-col items-stretch justify-stretch
+  flex flex-col items-stretch justify-between
 
     bg-center bg-cover bg-no-repeat">
     
@@ -9,7 +9,7 @@
    <Header />
        
 
-  <router-view></router-view>
+  <router-view class="h-[90%]"></router-view>
    
   <Footer />
   </div>
