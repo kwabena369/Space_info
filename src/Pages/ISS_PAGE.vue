@@ -1,199 +1,242 @@
 <template>
-  <div
-  class="h-all">
-    <div id="map"
-     class="border-2 border-solid rounded-xl
-       w-96 m-auto" style="height: 400px;">
+  <div class="min-h-full p-4 md:p-8">
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto mb-8">
+      <h1 class="text-4xl md:text-5xl font-bold text-center text-white mb-4">
+        ISS Live Tracker
+        <span class="inline-block w-3 h-3 ml-2 rounded-full bg-red-500 animate-pulse"></span>
+      </h1>
+      <p class="text-gray-300 text-center text-lg">Track the International Space Station in real-time</p>
+    </header>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+      <!-- Map Container -->
+      <div class="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700">
+        <div 
+          id="map" 
+          class="h-[500px] w-full rounded-xl overflow-hidden shadow-2xl"
+        ></div>
+        
+        <!-- Stats Display -->
+        <div class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="bg-gray-800/50 rounded-xl p-4">
+            <h3 class="text-gray-400 text-sm">Distance</h3>
+            <p class="text-2xl font-bold text-white">
+              {{ Math.round(distance).toLocaleString() }} km
+            </p>
+          </div>
+          <div class="bg-gray-800/50 rounded-xl p-4">
+            <h3 class="text-gray-400 text-sm">Altitude</h3>
+            <p class="text-2xl font-bold text-white">408 km</p>
+          </div>
+          <div class="bg-gray-800/50 rounded-xl p-4">
+            <h3 class="text-gray-400 text-sm">Speed</h3>
+            <p class="text-2xl font-bold text-white">7.66 km/s</p>
+          </div>
+        </div>
       </div>
- 
 
-      <div class="title
-       w-fit m-auto  text-2xl text-white font-semibold">
-     <span>
-       I.S.S
-     </span>
-   </div>
-   
-    <!-- here is the horizontal bar for the numerical 
-    values of the iss -->
-<div class="great_info
- flex flex-row space-x-2 items-center
-  h-fit
-  rounded-2xl p-1
-bg-none
-text-black
-   m-auto w-fit 
- justify-center">
+      <!-- Info Panels -->
+      <div class="space-y-6">
+        <!-- Crew Panel -->
+        <div class="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
+          <h2 class="text-2xl font-bold text-white mb-4">
+            <span class="mr-2">👨‍🚀</span> Current Crew
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div 
+              v-for="(member, index) in crewMembers" 
+              :key="index"
+              class="bg-gray-800/50 rounded-xl p-4"
+            >
+              <div class="flex items-center space-x-3">
+                <div class="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                  <span class="text-xl">👨‍🚀</span>
+                </div>
+                <div>
+                  <h3 class="text-white font-medium">{{ member.name }}</h3>
+                  <p class="text-gray-400 text-sm">{{ member.role }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  <!-- for the distance -->
-   
-  
-<div class="distance_btn flex
-flex-col
- rounded-3xl
- p-5
- m-1
-space-y-2 font-sans text-center 
-items-center justify-center
-text-2xl 
-">
-   <span
-    class="border-b-2 border-solid
-    border-blue-500 text-white
-    ">
-    Distance/km 
-   </span>
-    <span class="
-    bg-gray-100 rounded-md p-2 ">
-{{       distance
-}}    </span>
-</div>
-
-</div>
-
-
-
-</div>
- 
-
+        <!-- Share Panel -->
+        <div class="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
+          <h2 class="text-2xl font-bold text-white mb-4">Share Location</h2>
+          <div class="flex space-x-4">
+            <button 
+              @click="shareLocation" 
+              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 px-4 transition-colors"
+            >
+              Share Position
+            </button>
+            <button 
+              @click="copyCoordinates" 
+              class="flex-1 bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-2 px-4 transition-colors"
+            >
+              Copy Coordinates
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
-import 'leaflet/dist/leaflet.css';
-import {getDistance} from "geolib"
-import L from 'leaflet';
-import iss from "../sricpt/iss_info"
-import customIconUrl from '../assets/space_images/iss.png'; // Replace with the correct path to your image
-import customIconUrl_2 from '../assets/space_images/person.png'; // Replace with the correct path to your image
- export default {
-   name:"ISS_INFO",
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+import { getDistance } from 'geolib'
+import iss from '../sricpt/iss_info'
+
+export default {
+  name: 'IssInfo',
+
   data() {
     return {
-      iss_cordinate: [0, 0],
-       my_location : [0,0],
-       polyline: null, // Add this variable to store the polyline
-        line_cordinate : [0,0]
-        ,
-        distance : 0
-
-    };
-  },
-  mounted() {
-    this.initializeMap();
-    this.Iss_updating();
-    // this.Plot_my_location();
-     
-    //  checking if they are going to 
-    //  allow the use of the navigation
-    if(navigator.geolocation){
-        // we are going to access the
-      navigator.geolocation.watchPosition((position)=>{
-          //  console.log(position.coords)
-           this.my_location = [position.coords.latitude, position.coords.longitude];
-
-        // Call the method to plot the location
-        this.Plot_my_location(this.my_location);
-        this.drawPolyline(); // Call drawPolyline when my_location changes
-
-        })
-      }
-  },
-  methods: {
-
-    initializeMap() {
-      // Initialize the map
-      this.map = L.map('map').setView([0, 0], 2);
-
-      // Add a tile layer (e.g., OpenStreetMap)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(this.map);
-    },
-    Iss_updating() {
-      setInterval(async () => {
-        const issData = await iss._get_iss_location();
-        const { longitude, latitude } = issData.iss_position;
-        this.iss_cordinate = [latitude, longitude];
-       this.line_cordinate = [this.iss_cordinate,this.my_location]
-
-
-         // Remove the existing polyline if it exists
-    if (this.polyline) {
-      this.map.removeLayer(this.polyline);
+      map: null,
+      marker: null,
+      myMarker: null,
+      polyline: null,
+      issCoordinate: [0, 0],
+      myLocation: [0, 0],
+      distance: 0,
+      crewMembers: [
+        { name: 'Raja Chari', role: 'Commander' },
+        { name: 'Tom Marshburn', role: 'Pilot' },
+        { name: 'Kayla Barron', role: 'Mission Specialist' },
+        { name: 'Matthias Maurer', role: 'Flight Engineer' }
+      ],
+      updateInterval: null
     }
-
-    // Create a new polyline between the ISS and your location
-    this.polyline = L.polyline(this.line_cordinate, {
-      color: 'blue', 
-      opacity:0.7// You can customize the color and other options
-    }).addTo(this.map);
-
-    //   for the distance calculation
-
-
-      }, 1000);
-    },
-    // this is method for
-    // the repeated plotting of my current 
-    // location
-    Plot_my_location(my_location){
-
-      const customIcon = L.icon({
-    iconUrl: customIconUrl_2, // Replace with the actual path to your image file
-    iconSize: [32, 32], // Adjust the size as needed
-    iconAnchor: [16, 32], // Adjust the anchor point as needed
-  });
-
-
-            this.my_maker
-             = L.marker(my_location,{icon:customIcon}).addTo(this.map);
-    },
-
-    drawPolyline() {
-  
   },
 
-
-
+  mounted() {
+    this.initMap()
+    this.startTracking()
+    this.initGeolocation()
   },
-  watch: {
-    iss_cordinate(newCordinates) {
-      let lastUpdateTime = new Date();
-      // Remove the previous marker
-      if (this.marker) {
-        this.map.removeLayer(this.marker);
+
+  beforeUnmount() {
+    if (this.updateInterval) {
+      clearInterval(this.updateInterval)
+    }
+    if (this.map) {
+      this.map.remove()
+    }
+  },
+
+  methods: {
+    initMap() {
+      this.map = L.map('map').setView([0, 0], 2)
+      
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '©OpenStreetMap, ©CartoDB',
+        maxZoom: 19
+      }).addTo(this.map)
+    },
+
+    async startTracking() {
+      const updatePosition = async () => {
+        try {
+          const issData = await iss._get_iss_location()
+          this.issCoordinate = [
+            parseFloat(issData.iss_position.latitude),
+            parseFloat(issData.iss_position.longitude)
+          ]
+          this.updateIssMarker()
+          this.updatePolyline()
+          this.calculateDistance()
+        } catch (error) {
+          console.error('Failed to update ISS position:', error)
+        }
       }
 
-
-
-  let location1 = { latitude: this.iss_cordinate[0],
-     longitude: this.iss_cordinate[1] };
-  let location2 = { latitude: this.my_location[0],
-     longitude: this.my_location[1] };
-
-
-  // Calculate the distance between the two locations (result in meters)
-this.distance = getDistance(location2, location1)/1000;
-
-
-  
-      const customIcon_3 = L.icon({
-    iconUrl: customIconUrl, // Replace with the actual path to your image file
-    iconSize: [32, 32], // Adjust the size as needed
-    iconAnchor: [16, 32], // Adjust the anchor point as needed
-  });
-
-      // Create a new marker with the updated coordinates
-      this.marker = L.marker([newCordinates[0],newCordinates[1]],{icon:customIcon_3}).addTo(this.map);
-      this.drawPolyline(); // Call drawPolyline when iss_cordinate changes
-
+      await updatePosition()
+      this.updateInterval = setInterval(updatePosition, 1000)
     },
 
-    my_location(newLocation) {
-    this.drawPolyline(); // Call drawPolyline when my_location changes
-  },
+    initGeolocation() {
+      if (!navigator.geolocation) return
 
+      navigator.geolocation.watchPosition(
+        (position) => {
+          this.myLocation = [
+            position.coords.latitude,
+            position.coords.longitude
+          ]
+          this.updateMyMarker()
+          this.updatePolyline()
+          this.calculateDistance()
+        },
+        (error) => {
+          console.error('Geolocation error:', error)
+        },
+        { enableHighAccuracy: true }
+      )
+    },
 
-  },
-};
+    updateIssMarker() {
+      if (this.marker) {
+        this.marker.setLatLng(this.issCoordinate)
+      } else {
+        this.marker = L.marker(this.issCoordinate).addTo(this.map)
+      }
+    },
+
+    updateMyMarker() {
+      if (this.myMarker) {
+        this.myMarker.setLatLng(this.myLocation)
+      } else {
+        this.myMarker = L.marker(this.myLocation).addTo(this.map)
+      }
+    },
+
+    updatePolyline() {
+      if (this.myLocation[0] === 0) return
+
+      if (this.polyline) {
+        this.map.removeLayer(this.polyline)
+      }
+
+      this.polyline = L.polyline(
+        [this.issCoordinate, this.myLocation],
+        {
+          color: '#4CAF50',
+          weight: 2,
+          opacity: 0.6,
+          dashArray: '5, 10'
+        }
+      ).addTo(this.map)
+    },
+
+    calculateDistance() {
+      if (this.myLocation[0] === 0) return
+
+      this.distance = getDistance(
+        { latitude: this.issCoordinate[0], longitude: this.issCoordinate[1] },
+        { latitude: this.myLocation[0], longitude: this.myLocation[1] }
+      ) / 1000
+    },
+
+    shareLocation() {
+      const text = `Check out the ISS! Currently at: ${this.issCoordinate[0].toFixed(2)}, ${this.issCoordinate[1].toFixed(2)}`
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`)
+    },
+
+    copyCoordinates() {
+      const coords = `${this.issCoordinate[0].toFixed(4)}, ${this.issCoordinate[1].toFixed(4)}`
+      navigator.clipboard.writeText(coords)
+    }
+  }
+}
 </script>
+
+<style scoped>
+.leaflet-container {
+  background: #1a1a1a;
+}
+</style>
