@@ -9,7 +9,7 @@
       <p class="text-gray-300 text-center text-lg">Track the International Space Station in real-time</p>
     </header>
 
-    <!-- Main Content -->
+     <!-- Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
       <!-- Map Container -->
       <div class="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700">
@@ -77,7 +77,7 @@
               @click="copyCoordinates" 
               class="flex-1 bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-2 px-4 transition-colors"
             >
-              Copy Coordinates
+              Copy Coordinates 
             </button>
           </div>
         </div>
@@ -110,11 +110,14 @@ export default {
         { name: 'Kayla Barron', role: 'Mission Specialist' },
         { name: 'Matthias Maurer', role: 'Flight Engineer' }
       ],
-      updateInterval: null
+      updateInterval: null,
+      issIcon: null,
+      userIcon: null
     }
   },
 
   mounted() {
+    this.createCustomIcons()
     this.initMap()
     this.startTracking()
     this.initGeolocation()
@@ -130,12 +133,42 @@ export default {
   },
 
   methods: {
+    createCustomIcons() {
+      // Modern ISS icon
+      this.issIcon = L.divIcon({
+        html: `
+          <div class="iss-icon bg-red-400 w-[32px] h-[32px] bg-opacity-sm rounded-3xl ">
+            <div class="iss-symbol">
+              <div class="iss-body"></div>
+             <SvgFile/>
+              <div class="iss-panels"></div>
+            </div>
+          </div>`,
+        className: 'iss-marker',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+      })
+
+      // User location icon
+      this.userIcon = L.divIcon({
+        html: `
+          <div class="user-icon">
+            <div class="ping"></div>
+            <div class="center-dot"></div>
+          </div>`,
+        className: 'user-marker',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      })
+    },
+
     initMap() {
       this.map = L.map('map').setView([0, 0], 2)
       
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '©OpenStreetMap, ©CartoDB',
-        maxZoom: 19
+      // Modern, vibrant map style
+      L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: '©OpenTopoMap, ©OpenStreetMap contributors',
+        maxZoom: 17
       }).addTo(this.map)
     },
 
@@ -183,7 +216,14 @@ export default {
       if (this.marker) {
         this.marker.setLatLng(this.issCoordinate)
       } else {
-        this.marker = L.marker(this.issCoordinate).addTo(this.map)
+        this.marker = L.marker(this.issCoordinate, {
+          icon: this.issIcon
+        }).bindTooltip('ISS Location', {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -25],
+          className: 'iss-tooltip'
+        }).addTo(this.map)
       }
     },
 
@@ -191,7 +231,14 @@ export default {
       if (this.myMarker) {
         this.myMarker.setLatLng(this.myLocation)
       } else {
-        this.myMarker = L.marker(this.myLocation).addTo(this.map)
+        this.myMarker = L.marker(this.myLocation, {
+          icon: this.userIcon
+        }).bindTooltip('Your Location', {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -20],
+          className: 'user-tooltip'
+        }).addTo(this.map)
       }
     },
 
@@ -205,9 +252,9 @@ export default {
       this.polyline = L.polyline(
         [this.issCoordinate, this.myLocation],
         {
-          color: '#4CAF50',
+          color: '#2563eb',
           weight: 2,
-          opacity: 0.6,
+          opacity: 0.8,
           dashArray: '5, 10'
         }
       ).addTo(this.map)
@@ -224,19 +271,127 @@ export default {
 
     shareLocation() {
       const text = `Check out the ISS! Currently at: ${this.issCoordinate[0].toFixed(2)}, ${this.issCoordinate[1].toFixed(2)}`
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`)
+      window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}`)
     },
 
     copyCoordinates() {
       const coords = `${this.issCoordinate[0].toFixed(4)}, ${this.issCoordinate[1].toFixed(4)}`
       navigator.clipboard.writeText(coords)
     }
-  }
+  },
+
 }
 </script>
-
+ 
 <style scoped>
 .leaflet-container {
-  background: #1a1a1a;
+  background: #f5f5f5;
+}
+
+.iss-marker {
+  filter: drop-shadow(0 0 5px rgba(37, 99, 235, 0.5));
+}
+
+.iss-icon {
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.iss-symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.iss-body {
+  width: 24px;
+  height: 12px;
+  background: #2563eb;
+  border-radius: 6px;
+  position: relative;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+}
+
+.iss-panels {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 4px;
+  background: #60a5fa;
+  border-radius: 2px;
+}
+
+.iss-panels::before,
+.iss-panels::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #93c5fd;
+  border-radius: 50%;
+  top: -2px;
+}
+
+.iss-panels::before {
+  left: -4px;
+}
+
+.iss-panels::after {
+  right: -4px;
+}
+
+.iss-tooltip {
+  background: rgba(37, 99, 235, 0.9);
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-marker .ping {
+  width: 20px;
+  height: 20px;
+  background: rgba(220, 38, 38, 0.2);
+  border-radius: 50%;
+  animation: ping 1.5s ease-in-out infinite;
+}
+
+.user-marker .center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: #dc2626;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.user-tooltip {
+  background: rgba(220, 38, 38, 0.9);
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 5px 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes ping {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
 }
 </style>
