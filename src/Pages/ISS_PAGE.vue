@@ -270,7 +270,7 @@ export default {
     },
 
     shareLocation() {
-      const text = `Check out the ISS! Currently at: ${this.issCoordinate[0].toFixed(2)}, ${this.issCoordinate[1].toFixed(2)}`
+      const text = `This is so cool 😍 the iss  is Currently at: ${this.issCoordinate[0].toFixed(2)}, ${this.issCoordinate[1].toFixed(2)}`
       window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}`)
     },
 
@@ -280,6 +280,7 @@ export default {
     }
   },
 
+  //  
 }
 </script>
  
