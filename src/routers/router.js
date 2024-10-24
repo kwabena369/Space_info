@@ -2,6 +2,7 @@ import { createRouter,createWebHistory } from "vue-router";
  
  import Home_Page from "../Pages/Homepage.vue"
   import ISS_P from "../Pages/ISS_PAGE.vue"
+import Mars from "../Pages/Mars.vue";
 //  here is the making of the route
  
  const routes =[
@@ -16,6 +17,12 @@ import { createRouter,createWebHistory } from "vue-router";
          path : "/ISS",
          name : "ISS_PAGE",
          component:ISS_P
+     },
+     //   rputer to the Marspage
+     {
+         path: "/Mars",
+         name: "Mars",
+         component  : Mars
      }
  ]
   

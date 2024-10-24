@@ -39,7 +39,7 @@
         </router-link>
 
         <!-- Mars Card -->
-        <router-link to="/mars" class="transform transition-all duration-300 hover:scale-105">
+        <router-link to="/Mars" class="transform transition-all duration-300 hover:scale-105">
           <div class="relative group w-72 h-96 md:w-80 md:h-96 rounded-xl overflow-hidden">
             <div class="absolute inset-0 bg-bg_mars bg-center bg-cover bg-no-repeat transition-transform duration-300 group-hover:scale-110"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>

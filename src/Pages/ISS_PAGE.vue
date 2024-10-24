@@ -37,50 +37,54 @@
         </div>
       </div>
 
-      <!-- Info Panels -->
-      <div class="space-y-6">
-        <!-- Crew Panel -->
-        <div class="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
-          <h2 class="text-2xl font-bold text-white mb-4">
-            <span class="mr-2">👨‍🚀</span> Current Crew
-          </h2>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div 
-              v-for="(member, index) in crewMembers" 
-              :key="index"
-              class="bg-gray-800/50 rounded-xl p-4"
-            >
-              <div class="flex items-center space-x-3">
-                <div class="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <span class="text-xl">👨‍🚀</span>
-                </div>
-                <div>
-                  <h3 class="text-white font-medium">{{ member.name }}</h3>
-                  <p class="text-gray-400 text-sm">{{ member.role }}</p>
-                </div>
+   <!-- Info Panels -->
+    <div class="space-y-6">
+      <!-- Updated Crew Panel -->
+      <div class="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
+        <h2 class="text-2xl font-bold text-white mb-4">
+          <span class="mr-2">👨‍🚀</span> Current Crew
+          <span class="text-sm font-normal text-gray-400 ml-2">({{ crewMembers.length }} members)</span>
+        </h2>
+        
+        <!-- Loading State -->
+        <div v-if="isLoadingCrew" class="flex justify-center items-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+        </div>
+
+        <!-- Error State -->
+        <div v-else-if="crewError" class="bg-red-500/20 rounded-xl p-4 text-red-200">
+          {{ crewError }}
+        </div>
+
+        <!-- Crew List -->
+        <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div 
+            v-for="(member, index) in crewMembers" 
+            :key="index"
+            class="bg-gray-800/50 rounded-xl p-4 transform transition-all hover:scale-102 hover:bg-gray-800/70"
+          >
+            <div class="flex items-center space-x-3">
+              <div class="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                <span class="text-xl">👨‍🚀</span>
+              </div>
+              <div>
+                <h3 class="text-white font-medium">{{ member.name }}</h3>
+                <p class="text-gray-400 text-sm">{{ member.craft }}</p>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Share Panel -->
-        <div class="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-700">
-          <h2 class="text-2xl font-bold text-white mb-4">Share Location</h2>
-          <div class="flex space-x-4">
-            <button 
-              @click="shareLocation" 
-              class="flex-1 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 px-4 transition-colors"
-            >
-              Share Position
-            </button>
-            <button 
-              @click="copyCoordinates" 
-              class="flex-1 bg-gray-700 hover:bg-gray-600 text-white rounded-lg py-2 px-4 transition-colors"
-            >
-              Copy Coordinates 
-            </button>
-          </div>
         </div>
+
+        <!-- Refresh Button -->
+        <button 
+          @click="refreshCrewData" 
+          class="mt-4 w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 rounded-lg py-2 px-4 transition-colors flex items-center justify-center space-x-2"
+          :disabled="isLoadingCrew"
+        >
+          <span class="text-sm">Refresh Crew Data</span>
+          <span v-if="isLoadingCrew" class="animate-spin text-sm">⟳</span>
+        </button>
       </div>
     </div>
   </div>
@@ -113,25 +117,33 @@ export default {
       updateInterval: null,
       issIcon: null,
       userIcon: null
+      ,
+       crewMembers: [],
+      isLoadingCrew: false,
+      crewError: null,
+      crewUpdateInterval: null
     }
   },
 
-  mounted() {
+async mounted() {
     this.createCustomIcons()
     this.initMap()
     this.startTracking()
     this.initGeolocation()
+    await this.fetchCrewData() // Initial crew data fetch
+    this.startCrewUpdates() // Start periodic updates
   },
-
   beforeUnmount() {
     if (this.updateInterval) {
       clearInterval(this.updateInterval)
+    }
+    if (this.crewUpdateInterval) {
+      clearInterval(this.crewUpdateInterval)
     }
     if (this.map) {
       this.map.remove()
     }
   },
-
   methods: {
     createCustomIcons() {
       // Modern ISS icon
@@ -269,10 +281,47 @@ export default {
       ) / 1000
     },
 
+
+    // getting the name of peopel there
+    getPeopleThere
+      () {
+        
+      let outcome = iss._getting_names_of_people_on_iss();
+      console.log(outcome);
+     } 
+,
     shareLocation() {
       const text = `This is so cool 😍 the iss  is Currently at: ${this.issCoordinate[0].toFixed(2)}, ${this.issCoordinate[1].toFixed(2)}`
       window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}`)
     },
+
+async fetchCrewData() {
+      this.isLoadingCrew = true
+      this.crewError = null
+      
+      try {
+        const response = await iss._getting_names_of_people_on_iss()
+        this.crewMembers = response.people
+      } catch (error) {
+        console.error('Failed to fetch crew data:', error)
+        this.crewError = 'Unable to load crew data. Please try again later.'
+      } finally {
+        this.isLoadingCrew = false
+      }
+    },
+
+    startCrewUpdates() {
+      // Update crew data every 5 minutes
+      this.crewUpdateInterval = setInterval(() => {
+        this.fetchCrewData()
+      }, 300000) // 5 minutes in milliseconds
+    },
+
+    async refreshCrewData() {
+      await this.fetchCrewData()
+    }
+    
+    ,
 
     copyCoordinates() {
       const coords = `${this.issCoordinate[0].toFixed(4)}, ${this.issCoordinate[1].toFixed(4)}`
