@@ -13,7 +13,7 @@ export default{
 
              await axios.get(url_now).then(
                 (res)=>{
-                 
+                 // life is really painful
                     const { data } = res 
                     if(data){
                         resolve(data)
