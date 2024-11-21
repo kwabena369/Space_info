@@ -31,5 +31,5 @@ import Mars from "../Pages/Mars.vue";
      history : createWebHistory(import.meta.env.BASE_URL),
       routes
  })
- 
+ // optimus is the name of the model
  export default main_router
