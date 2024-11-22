@@ -12,7 +12,7 @@ import Mars from "../Pages/Mars.vue";
          component : Home_Page
     }
      ,
-    //   for the iss page
+    //   for the iss page the ghost are out
      {
          path : "/ISS",
          name : "ISS_PAGE",
