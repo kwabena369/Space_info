@@ -1,5 +1,5 @@
 import { createRouter,createWebHistory } from "vue-router";
- 
+ //classical control
  import Home_Page from "../Pages/Homepage.vue"
   import ISS_P from "../Pages/ISS_PAGE.vue"
 import Mars from "../Pages/Mars.vue";
