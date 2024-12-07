@@ -5,6 +5,8 @@ import { createRouter,createWebHistory } from "vue-router";
 import Mars from "../Pages/Mars.vue";
 //  here is the making of the route
  
+
+// they were training 
  const routes =[
     {
          path:"/",
